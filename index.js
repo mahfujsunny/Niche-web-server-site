@@ -5,6 +5,8 @@ const { MongoClient } = require("mongodb");
 const ObjectId = require("mongodb").ObjectId;
 
 const app = express();
+
+// MiddleWare
 app.use(cors());
 app.use(express.json());
 const port = process.env.PORT || 5000;
@@ -15,11 +17,15 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
 });
 
+console.log(uri);
 async function run() {
   try {
+    console.log("hello");
     await client.connect();
-    const database = client.db("Guitar_Factory");
-    const guitarCollection = database.collection("guitars");
+
+    const database = client.db("watch-gallery");
+    console.log("hiiiiii");
+    const watchCollection = database.collection("watchs");
     const purchaserCollection = database.collection("purchaser");
     const usersCollection = database.collection("users");
     const reviewsCollection = database.collection("reviews");
@@ -29,20 +35,23 @@ async function run() {
       const result = await reviewsCollection.find({}).toArray();
       res.json(result);
     });
+
     // post reviews
     app.post("/reviews", async (req, res) => {
       const result = await reviewsCollection.insertOne(req.body);
       res.json(result);
     });
-    // get all guitar
-    app.get("/guitars", async (req, res) => {
-      const result = await guitarCollection.find({}).toArray();
+
+    // get all watch
+    app.get("/watchs", async (req, res) => {
+      const result = await watchCollection.find({}).toArray();
       res.json(result);
     });
-    // add manual products
-    app.post("/guitars", async (req, res) => {
+
+    // add products
+    app.post("/watchs", async (req, res) => {
       const products = req.body;
-      const result = await guitarCollection.insertOne(products);
+      const result = await watchCollection.insertOne(products);
       console.log(result);
       res.json(result);
     });
@@ -55,24 +64,26 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.json(result);
     });
-    // Receive Orders
-    app.put("/statusUpdate/:id", async (req, res) => {
-      const id = req.params.id;
-      const newStatus = req.body;
-      const filter = { _id: ObjectId(req.params.id) };
-      const options = { upsert: true };
-      const updateStatus = {
-        $set: {
-          status: newStatus[0],
-        },
-      };
-      const result = await purchaserCollection.updateOne(
-        filter,
-        updateStatus,
-        options
-      );
-      res.json(result);
-    });
+
+    // // Receive Orders
+    // app.put("/statusUpdate/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const newStatus = req.body;
+    //   const filter = { _id: ObjectId(req.params.id) };
+    //   const options = { upsert: true };
+    //   const updateStatus = {
+    //     $set: {
+    //       status: newStatus[0],
+    //     },
+    //   };
+    //   const result = await purchaserCollection.updateOne(
+    //     filter,
+    //     updateStatus,
+    //     options
+    //   );
+    //   res.json(result);
+    // });
+
     // find admin
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -84,6 +95,7 @@ async function run() {
       }
       res.json({ admin: isAdmin });
     });
+
     // save purchaser info
     app.post("/purchaser", async (req, res) => {
       const purchase = req.body;
@@ -106,9 +118,11 @@ async function run() {
       const result = await purchaserCollection.find({}).toArray();
       res.json(result);
     });
+
     // post an user
     app.post("/users", async (req, res) => {
       const user = req.body;
+      console.log(user);
       const result = await usersCollection.insertOne(user);
       res.json(result);
     });
@@ -125,6 +139,7 @@ async function run() {
       );
       console.log(result);
     });
+
     // cancel order
     app.delete("/cancelOrder/:id", (req, res) => {
       console.log(req.params.id);
@@ -140,7 +155,7 @@ async function run() {
     app.delete("/deleteProduct/:id", (req, res) => {
       console.log(req.params.id);
 
-      guitarCollection
+      watchCollection
         .deleteOne({ _id: ObjectId(req.params.id) })
         .then((result) => {
           res.send(result);
